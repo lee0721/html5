@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>用JavaScript套件開啟手機鏡頭進行拍照、錄影 - August - Let's Write</title>
+    <link rel="canonical" href="https://www.letswrite.tw/html-capture/"/>
+    <meta property="og:url" content="https://letswritetw.github.io/letswrite-html-capture/"/>
+    <meta property="fb:app_id" content="911000986339138"/>
+    <meta property="og:type" content="website"/>
+    <meta property="og:site_name" content="Let's Write"/>
+    <meta property="og:title" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影 - Augustus - Let's Write"/>
+    <meta itemprop="name" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影 - Augustus - Let's Write"/>
+    <meta name="description" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影"/>
+    <meta property="og:description" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影"/>
+    <meta itemprop="description" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影"/>
+    <meta itemprop="image" content="https://letswritetw.github.io/letswrite-html-capture/fb.jpg"/>
+    <meta property="og:image" content="https://letswritetw.github.io/letswrite-html-capture/fb.jpg"/>
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    <meta property="og:image:alt" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影"/>
+    <link rel="shortcut icon" href="https://letswritetw.github.io/letswritetw/dist/img/logo_512.png"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css" media="screen"/>
+    <link rel="stylesheet" href="dist/style.min.css" media="screen"/>
+</head>
+<body>
+    <div class="container" id="app">
+        <div class="title">
+            <h1>用JavaScript套件開啟手機鏡頭進行拍照、錄影</h1>
+        </div>
+        <hr/>
+        <h3>Vue mediaDevices：</h3>
+        <ul>
+            <li>基於 Vue.js 框架的媒體設備插件</li>
+            <li>簡化了在 Vue.js 項目中訪問相機和麥克風的過程</li>
+            <li>提供了簡單的 API 來實現相機拍照並上傳</li>
+        </ul>
+        <hr/>
+        <h2>範例</h2>
+        <h3>1. 前鏡頭 - 錄製影片</h3>
+        <button @click="startVideoRecording('user', 'video/*')">開啟前鏡頭錄影</button>
+        <p>顯示結果：</p>
+        <textarea id="videoUserFileResult" disabled="disabled"></textarea>
+        <video id="videoUserFileVideo" controls="controls" class="hidden"></video>
+        <hr/>
+        <h3>2. 前鏡頭 - 拍照</h3>
+        <button @click="captureImage('user', 'image/*')">開啟前鏡頭拍照</button>
+        <p>顯示結果：</p>
+        <textarea id="imageUserFileResult" disabled="disabled"></textarea>
+        <img id="imageUserFileImage" class="hidden"/>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <!-- <script src="your-vue-media-devices-library.js"></script> 替換成您的Vue mediaDevices套件的腳本引用 --> 
+    <script>
+        new Vue({
+            el: "#app",
+            methods: {
+                async startVideoRecording(captureType, acceptType) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        const videoElement = document.getElementById("videoUserFileVideo");
+                        const mediaRecorder = new MediaRecorder(stream);
+                        const chunks = [];
+
+                        videoElement.srcObject = stream;
+
+                        mediaRecorder.ondataavailable = function (e) {
+                            if (e.data.size > 0) {
+                                chunks.push(e.data);
+                            }
+                        };
+
+                        mediaRecorder.onstop = function () {
+                            const blob = new Blob(chunks, { type: acceptType });
+                            const videoUrl = URL.createObjectURL(blob);
+
+                            document.getElementById("videoUserFileResult").value = videoUrl;
+                            videoElement.classList.remove("hidden");
+                            videoElement.src = videoUrl;
+                        };
+
+                        mediaRecorder.start();
+                        setTimeout(function () {
+                            mediaRecorder.stop();
+                            stream.getTracks().forEach(track => track.stop());
+                        }, 10000); // Recording for 10 seconds
+                    } catch (error) {
+                        console.error("錄影時出錯：", error);
+                    }
+                },
+
+                async captureImage(captureType, acceptType) {
+                    try {
+                        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                        const imageElement = document.getElementById("imageUserFileImage");
+                        const videoElement = document.createElement("video");
+                        const canvas = document.createElement("canvas");
+                        const context = canvas.getContext("2d");
+
+                        videoElement.srcObject = stream;
+                        videoElement.play();
+
+                        videoElement.onloadedmetadata = function () {
+                            canvas.width = videoElement.videoWidth;
+                            canvas.height = videoElement.videoHeight;
+
+                            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                            const imageDataUrl = canvas.toDataURL(acceptType);
+
+                            document.getElementById("imageUserFileResult").value = imageDataUrl;
+                            imageElement.classList.remove("hidden");
+                            imageElement.src = imageDataUrl;
+
+                            stream.getTracks().forEach(track => track.stop());
+                        };
+                    } catch (error) {
+                        console.error("拍照時出錯：", error);
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
