@@ -56,7 +56,6 @@
     <textarea class="hidden" id="videoUserFileResult" disabled="disabled"></textarea>
     <video class="hidden" id="videoUserFileVideo" controls="controls"></video>
 
-
     <script>
         const videoElement = document.getElementById('video');
         const canvasElement = document.getElementById('canvas');
@@ -104,6 +103,8 @@
                 const videoUrl = window.URL.createObjectURL(blob);
                 // You can send the recorded video data to a server or display it on the page here
                 console.log('Recorded Video URL:', videoUrl);
+                document.getElementById('videoUserFileResult').value = videoUrl;
+                document.getElementById('videoUserFileVideo').src = videoUrl;
             };
             mediaRecorder.start();
             stopRecordingButton.disabled = false;
