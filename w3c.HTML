@@ -25,86 +25,75 @@
             <li>可以通過這種方式捕捉相機畫面並將其轉換為圖像</li>
         </ul>
         <hr/>
-        <h2>範例</h2>
-        <h3>1. 前鏡頭 - 錄製影片</h3>
-        <button onclick="startVideoRecording('user', 'video/*')">開啟前鏡頭錄影</button>
-        <p>顯示結果：</p>
-        <textarea id="videoUserFileResult" disabled="disabled"></textarea>
-        <video id="videoUserFileVideo" controls="controls" class="hidden"></video>
-        <hr/>
-        <h3>2. 前鏡頭 - 拍照</h3>
-        <button onclick="captureImage('user', 'image/*')">開啟前鏡頭拍照</button>
-        <p>顯示結果：</p>
-        <textarea id="imageUserFileResult" disabled="disabled"></textarea>
-        <img id="imageUserFileImage" class="hidden"/>
-        <hr/>
-    </div>
+        <h1>Camera Photo and Video Recording Example</h1>
+    
+    <p><button id="startCamera">Start Camera</button></p>
+    <p><button id="takePhoto" disabled>Take Photo</button></p>
+    <p><button id="startRecording" disabled>Start Recording</button></p>
+    <p><button id="stopRecording" disabled>Stop Recording</button></p>
+
+    <video id="video" autoplay></video>
+    <canvas id="canvas" style="display: none;"></canvas>
 
     <script>
-        function startVideoRecording(captureType, acceptType) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    const videoElement = document.getElementById("videoUserFileVideo");
-                    const mediaRecorder = new MediaRecorder(stream);
-                    const chunks = [];
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const startCameraButton = document.getElementById('startCamera');
+        const takePhotoButton = document.getElementById('takePhoto');
+        const startRecordingButton = document.getElementById('startRecording');
+        const stopRecordingButton = document.getElementById('stopRecording');
+        let mediaStream;
 
-                    videoElement.srcObject = stream;
+        // Start the camera
+        startCameraButton.addEventListener('click', async () => {
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = mediaStream;
+                takePhotoButton.disabled = false;
+                startRecordingButton.disabled = false;
+            } catch (error) {
+                console.error('Failed to get camera access:', error);
+            }
+        });
 
-                    mediaRecorder.ondataavailable = function (e) {
-                        if (e.data.size > 0) {
-                            chunks.push(e.data);
-                        }
-                    };
+        // Take a photo
+        takePhotoButton.addEventListener('click', () => {
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            canvasElement.getContext('2d').drawImage(videoElement, 0, 0);
+            const photoDataUrl = canvasElement.toDataURL('image/jpeg');
+            // You can send the captured photo data to a server or display it on the page here
+            console.log('Photo Data:', photoDataUrl);
+        });
 
-                    mediaRecorder.onstop = function () {
-                        const blob = new Blob(chunks, { type: acceptType });
-                        const videoUrl = URL.createObjectURL(blob);
+        let mediaRecorder;
+        let recordedChunks = [];
 
-                        document.getElementById("videoUserFileResult").value = videoUrl;
-                        videoElement.classList.remove("hidden");
-                        videoElement.src = videoUrl;
-                    };
+        // Start recording video
+        startRecordingButton.addEventListener('click', () => {
+            mediaRecorder = new MediaRecorder(mediaStream);
+            mediaRecorder.ondataavailable = event => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const videoUrl = window.URL.createObjectURL(blob);
+                // You can send the recorded video data to a server or display it on the page here
+                console.log('Recorded Video URL:', videoUrl);
+            };
+            mediaRecorder.start();
+            stopRecordingButton.disabled = false;
+            startRecordingButton.disabled = true;
+        });
 
-                    mediaRecorder.start();
-                    setTimeout(function () {
-                        mediaRecorder.stop();
-                        stream.getTracks().forEach(track => track.stop());
-                    }, 10000); // Recording for 10 seconds
-                })
-                .catch(function (error) {
-                    console.error("錄影時出錯：", error);
-                });
-        }
-
-        function captureImage(captureType, acceptType) {
-            navigator.mediaDevices.getUserMedia({ video: true })
-                .then(function (stream) {
-                    const imageElement = document.getElementById("imageUserFileImage");
-                    const videoElement = document.createElement("video");
-                    const canvas = document.createElement("canvas");
-                    const context = canvas.getContext("2d");
-
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-
-                    videoElement.onloadedmetadata = function () {
-                        canvas.width = videoElement.videoWidth;
-                        canvas.height = videoElement.videoHeight;
-
-                        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-                        const imageDataUrl = canvas.toDataURL(acceptType);
-
-                        document.getElementById("imageUserFileResult").value = imageDataUrl;
-                        imageElement.classList.remove("hidden");
-                        imageElement.src = imageDataUrl;
-
-                        stream.getTracks().forEach(track => track.stop());
-                    };
-                })
-                .catch(function (error) {
-                    console.error("拍照時出錯：", error);
-                });
-        }
+        // Stop recording video
+        stopRecordingButton.addEventListener('click', () => {
+            mediaRecorder.stop();
+            stopRecordingButton.disabled = true;
+            startRecordingButton.disabled = false;
+        });
     </script>
 </body>
 </html>
