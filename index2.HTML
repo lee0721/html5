@@ -1,113 +1,110 @@
 <!-- https://lee0721.github.io/html5/index2.HTML -->
 <!DOCTYPE html>
 <html lang="zh-Hant">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>使用MediaStream API訪問相機和麥克風</title>
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="使用MediaStream API訪問相機和麥克風" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css" media="screen" />
-    <link rel="stylesheet" href="style.min.css" media="screen" />
-  </head>
-  <body>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge"/>
+    <title>用JavaScript套件開啟手機鏡頭進行拍照、錄影</title> 
+    <meta property="og:image:width" content="1200"/>
+    <meta property="og:image:height" content="630"/>
+    <meta property="og:image:alt" content="用JavaScript套件開啟手機鏡頭進行拍照、錄影"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/dark.min.css" media="screen"/>
+    <link rel="stylesheet" href="dist/style.min.css" media="screen"/>
+</head>
+<body>
     <div class="container" id="app">
-      <div class="title">
-        <h1>使用MediaStream API訪問相機和麥克風</h1>
-      </div>
-      <h2>範例</h2>
-      <h3>1. 前鏡頭 - 錄製影片</h3>
-      <p>
-        <label for="videoUser" class="custom-button">開始前鏡頭錄影</label>
-      </p>
-      <p>結果：</p>
-      <video id="videoUser" controls="controls"></video>
-      <hr />
-      <h3>2. 前鏡頭 - 拍照</h3>
-      <p>
-        <label for="photoUser" class="custom-button">拍前鏡頭照片</label>
-      </p>
-      <p>結果：</p>
-      <img id="photoUserImage" class="hidden" />
-      <hr />
-      <h3>3. 後鏡頭 - 錄製影片</h3>
-      <p>
-        <label for="videoEnv" class="custom-button">開始後鏡頭錄影</label>
-      </p>
-      <p>結果：</p>
-      <video id="videoEnv" controls="controls"></video>
-      <hr />
-      <h3>4. 後鏡頭 - 拍照</h3>
-      <p>
-        <label for="photoEnv" class="custom-button">拍後鏡頭照片</label>
-      </p>
-      <p>結果：</p>
-      <img id="photoEnvImage" class="hidden" />
-      <hr />
-      <h3>5. 前鏡頭 - 錄製音訊</h3>
-      <p>
-        <label for="audioUser" class="custom-button">開始前鏡頭錄音</label>
-      </p>
-      <p>結果：</p>
-      <audio id="audioUser" controls="controls"></audio>
-      <hr />
+        <div class="title">
+            <h1>用JavaScript套件開啟手機鏡頭進行拍照、錄影</h1>
+        </div>
+        <hr/>
+        <h3>W3C MediaStream API：</h3>
+        <ul>
+            <li>透過 JavaScript 訪問媒體設備，例如相機和麥克風</li>
+            <li>需要使用 navigator.mediaDevices 對象</li>
+            <li>可以通過這種方式捕捉相機畫面並將其轉換為圖像</li>
+        </ul>
+        <hr/>
+        <h2>範例</h2>
+        <h3>1. 前鏡頭 - 錄製影片</h3>
+        <button onclick="startVideoRecording('user', 'video/*')">開啟前鏡頭錄影</button>
+        <p>顯示結果：</p>
+        <textarea id="videoUserFileResult" disabled="disabled"></textarea>
+        <video id="videoUserFileVideo" controls="controls" class="hidden"></video> 
+        <hr/>
+        <h3>2. 前鏡頭 - 拍照</h3>
+        <button onclick="captureImage('user', 'image/*')">開啟前鏡頭拍照</button>
+        <p>顯示結果：</p>
+        <textarea id="imageUserFileResult" disabled="disabled"></textarea> 
+        <img id="imageUserFileImage" class="hidden"/>
+        <hr/>
     </div>
-    <style>
-      /* 隱藏媒體元素 */
-      .hidden {
-        display: none;
-      }
 
-      /* 自定義按鈕樣式 */
-      .custom-button {
-        background-color: transparent;
-        color: white;
-        padding: 10px 20px;
-        cursor: pointer;
-        border: 4px solid hsl(270, 92%, 81%);
-        border-radius: 5px;
-      }
-
-      /* 按鈕懸停樣式 */
-      .custom-button:hover {
-        background-color: #cfa3fb;
-      }
-    </style>
     <script>
-      // 函數用於訪問媒體設備並顯示流
-      async function startMediaStream(deviceType, mediaType, resultElementId) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia({ [deviceType]: true, [mediaType]: true });
-          const mediaElement = document.getElementById(resultElementId);
-          mediaElement.srcObject = stream;
-          mediaElement.classList.remove('hidden');
-        } catch (error) {
-          console.error('訪問媒體流時出錯：', error);
+        function startVideoRecording(captureType, acceptType) {
+            navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .then(function (stream) {
+                    const videoElement = document.getElementById("videoUserFileVideo");
+                    const mediaRecorder = new MediaRecorder(stream);
+                    const chunks = [];
+
+                    videoElement.srcObject = stream;
+
+                    mediaRecorder.ondataavailable = function (e) {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = function () {
+                        const blob = new Blob(chunks, { type: acceptType });
+                        const videoUrl = URL.createObjectURL(blob);
+
+                        document.getElementById("videoUserFileResult").value = videoUrl;
+                        videoElement.classList.remove("hidden");
+                        videoElement.src = videoUrl;
+                    };
+
+                    mediaRecorder.start();
+                    setTimeout(function () {
+                        mediaRecorder.stop();
+                        stream.getTracks().forEach(track => track.stop());
+                    }, 10000); // Recording for 10 seconds
+                })
+                .catch(function (error) {
+                    console.error("錄影時出錯：", error);
+                });
         }
-      }
 
-      // 按鈕的事件監聽器
-      document.getElementById('videoUser').addEventListener('click', () => {
-        startMediaStream('facingMode', 'video', 'videoUser');
-      });
+        function captureImage(captureType, acceptType) {
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function (stream) {
+                    const imageElement = document.getElementById("imageUserFileImage");
+                    const videoElement = document.createElement("video");
+                    const canvas = document.createElement("canvas");
+                    const context = canvas.getContext("2d");
 
-      document.getElementById('photoUserImage').addEventListener('click', () => {
-        startMediaStream('facingMode', 'photo', 'photoUserImage');
-      });
+                    videoElement.srcObject = stream;
+                    videoElement.play();
 
-      document.getElementById('videoEnv').addEventListener('click', () => {
-        startMediaStream('facingMode', { exact: 'environment' }, 'videoEnv');
-      });
+                    videoElement.onloadedmetadata = function () {
+                        canvas.width = videoElement.videoWidth;
+                        canvas.height = videoElement.videoHeight;
 
-      document.getElementById('photoEnvImage').addEventListener('click', () => {
-        startMediaStream('facingMode', { exact: 'environment' }, 'photoEnvImage');
-      });
+                        context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                        const imageDataUrl = canvas.toDataURL(acceptType);
 
-      document.getElementById('audioUser').addEventListener('click', () => {
-        startMediaStream('facingMode', 'audio', 'audioUser');
-      });
+                        document.getElementById("imageUserFileResult").value = imageDataUrl;
+                        imageElement.classList.remove("hidden");
+                        imageElement.src = imageDataUrl;
+
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+                })
+                .catch(function (error) {
+                    console.error("拍照時出錯：", error);
+                });
+        }
     </script>
-  </body>
+</body>
 </html>
