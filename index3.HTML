@@ -20,13 +20,14 @@
         <hr/>
         <h2>範例</h2>
         <h3>1. 前鏡頭 - 錄製影片</h3>
-        <button onclick="startVideoRecording('user', 'video/*')">開啟前鏡頭錄影</button>
+        <button @click="startVideoRecording('user', 'video/*')" v-bind:disabled="recording">開啟前鏡頭錄影</button>
+        <button @click="stopVideoRecording" v-bind:disabled="!recording">停止錄影</button>
         <p>顯示結果：</p>
         <textarea id="videoUserFileResult" disabled="disabled"></textarea>
         <video id="videoUserFileVideo" controls="controls" class="hidden"></video> 
         <hr/>
         <h3>2. 前鏡頭 - 拍照</h3>
-        <button onclick="captureImage('user', 'image/*')">開啟前鏡頭拍照</button>
+        <button @click="captureImage('user', 'image/*')">開啟前鏡頭拍照</button>
         <p>顯示結果：</p>
         <textarea id="imageUserFileResult" disabled="disabled"></textarea> 
         <img id="imageUserFileImage" class="hidden"/>
@@ -37,65 +38,75 @@
     <script>
         new Vue({
             el: '#app',
+            data: {
+                recording: false,
+                mediaRecorder: null // 初始化 mediaRecorder 为 null
+            },
             methods: {
                 startVideoRecording: function (captureType, acceptType) {
+                    this.recording = true;
+                    // Check for permissions before accessing the camera and microphone
                     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                        .then(function (stream) {
+                        .then((stream) => {
                             const videoElement = document.getElementById("videoUserFileVideo");
                             const mediaRecorder = new MediaRecorder(stream);
                             const chunks = [];
-    
+                            this.mediaRecorder = mediaRecorder; // 保存 mediaRecorder
+
                             videoElement.srcObject = stream;
-    
+
                             mediaRecorder.ondataavailable = function (e) {
                                 if (e.data.size > 0) {
                                     chunks.push(e.data);
                                 }
                             };
-    
+
                             mediaRecorder.onstop = function () {
+                                this.recording = false;
                                 const blob = new Blob(chunks, { type: acceptType });
                                 const videoUrl = URL.createObjectURL(blob);
-    
+
                                 document.getElementById("videoUserFileResult").value = videoUrl;
                                 videoElement.classList.remove("hidden");
                                 videoElement.src = videoUrl;
                             };
-    
+
                             mediaRecorder.start();
-                            setTimeout(function () {
-                                mediaRecorder.stop();
-                                stream.getTracks().forEach(track => track.stop());
-                            }, 10000); // Recording for 10 seconds
                         })
                         .catch(function (error) {
                             console.error("錄影時出錯：", error);
                         });
                 },
-    
+
+                stopVideoRecording: function () {
+                    if (this.mediaRecorder) { // 检查是否有有效的 mediaRecorder
+                        this.recording = false;
+                        this.mediaRecorder.stop();
+                    }
+                },
+
                 captureImage: function (captureType, acceptType) {
+                    // Check for permissions before accessing the camera
                     navigator.mediaDevices.getUserMedia({ video: true })
                         .then(function (stream) {
                             const imageElement = document.getElementById("imageUserFileImage");
                             const videoElement = document.createElement("video");
                             const canvas = document.createElement("canvas");
                             const context = canvas.getContext("2d");
-    
+
                             videoElement.srcObject = stream;
                             videoElement.play();
-    
+
                             videoElement.onloadedmetadata = function () {
                                 canvas.width = videoElement.videoWidth;
                                 canvas.height = videoElement.videoHeight;
-    
+
                                 context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
                                 const imageDataUrl = canvas.toDataURL(acceptType);
-    
+
                                 document.getElementById("imageUserFileResult").value = imageDataUrl;
                                 imageElement.classList.remove("hidden");
                                 imageElement.src = imageDataUrl;
-    
-                                stream.getTracks().forEach(track => track.stop());
                             };
                         })
                         .catch(function (error) {
