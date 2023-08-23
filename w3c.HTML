@@ -27,13 +27,35 @@
         <hr/>
         <h1>Camera Photo and Video Recording Example</h1>
     
+    <!-- 示例1: 前鏡頭 - 開始相機 -->
+    <h2>示例1: 前鏡頭 - 開始相機</h2>
     <p><button id="startCamera">Start Camera</button></p>
+
+    <!-- 示例1 结果显示 -->
+    <p>顯示結果：</p>
+    <video id="video" autoplay></video>
+
+    <!-- 示例2: 前鏡頭 - 拍照 -->
+    <h2>示例2: 前鏡頭 - 拍照</h2>
     <p><button id="takePhoto" disabled>Take Photo</button></p>
+
+    <!-- 示例2 结果显示 -->
+    <p>顯示結果：</p>
+    <canvas id="canvas" style="display: none;"></canvas>
+
+    <!-- 示例3: 前鏡頭 - 開始錄影 -->
+    <h2>示例3: 前鏡頭 - 開始錄影</h2>
     <p><button id="startRecording" disabled>Start Recording</button></p>
+
+    <!-- 示例3 结果显示 -->
+    <p>顯示結果：</p>
     <p><button id="stopRecording" disabled>Stop Recording</button></p>
 
-    <video id="video" autoplay></video>
-    <canvas id="canvas" style="display: none;"></canvas>
+    <!-- 示例3 结果显示 -->
+    <p>顯示結果：</p>
+    <textarea class="hidden" id="videoUserFileResult" disabled="disabled"></textarea>
+    <video class="hidden" id="videoUserFileVideo" controls="controls"></video>
+
 
     <script>
         const videoElement = document.getElementById('video');
