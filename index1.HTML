@@ -191,7 +191,7 @@
           };
 
           mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
             const audioUrl = URL.createObjectURL(audioBlob);
             audioResult.src = audioUrl;
             audioResult.classList.remove('hidden');
